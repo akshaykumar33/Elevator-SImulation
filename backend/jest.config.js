@@ -1,9 +1,10 @@
-/** @type {import('jest').Config} */
+/** @type {import("jest").Config} **/
 module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "node",
+  preset: 'ts-jest',
+  testEnvironment: 'node',
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1", // 👈 This resolves @/ alias to /src
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
-  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts', '<rootDir>/tests/teardown.ts'],
 };
+
