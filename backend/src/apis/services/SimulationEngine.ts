@@ -126,22 +126,22 @@ export default class SimulationEngine extends EventEmitter {
      updateFloorPanel(floor: number, direction: Direction, active: boolean) {
        
         this.emit("floorPanelUpdate", { floor, direction, active });
-         logger.info(`updateFloorPanel called :, ${floor}, ${direction}, ${active}`);
+         logger.info(`updateFloorPanel : ${floor}, ${direction}, ${active}`);
     }
 
     updateFloorWaitingArea(floor: number) {
         const waitingPeople = this.requestHandler.getWaitingPeopleAtFloor(floor);
         this.emit('simulation:floorWaitingAreaUpdate', { floor, waitingPeople });
-        logger.info("updateFloorWaitingArea",floor,waitingPeople)
+        logger.info(`updateFloorWaitingArea: ${floor},${JSON.stringify(waitingPeople)}`)
     }
 
     updateElevatorDisplay(elevatorId: number) {
         this.emit('simulation:elevatorDisplayUpdate', { elevatorId });
-        logger.info(`updateElevatorDisplay:,${elevatorId}`)
+        logger.info(`updateElevatorDisplay: ${elevatorId}`)
     }
 
     handleFloorRequest(floor: number, direction: Direction) {
-       logger.info(`handleFloorRequest:, ${floor}, ${direction}`)
+       logger.info(`handleFloorRequest: ${floor}, ${direction}`)
         const maxFloor = this.config.numFloors;
         let destinationFloor: number | undefined;
 
@@ -167,7 +167,7 @@ export default class SimulationEngine extends EventEmitter {
         this.emit('simulation:floorRequest', { floor, destinationFloor, direction });
     }
     getSnapshot(): SimulationSnapshot { 
-        logger.info(`requestsQueue:,${this.requestHandler.getSnapshot()}`)
+        // logger.info(`requestsQueue:${this.requestHandler.getSnapshot().map((queue:Request)=>JSON.stringify(queue))}`)
         return {
             elevators: this.elevators.map(e => e.getSnapshot()),
             requestsQueue: this.requestHandler.getSnapshot(),
@@ -186,7 +186,7 @@ export default class SimulationEngine extends EventEmitter {
     updateConfig<K extends keyof SimulationConfig>(key: K, value: SimulationConfig[K]) {
         if (this.config[key] === value) return;
         this.config[key] = value;
-          logger.info(`updateConfig->,${key}:${value}`)
+          logger.info(`updateConfig-> ${key}:${value}`)
         if (key === 'numElevators' || key === 'numFloors') {
             const wasRunning = this.isRunning;
             this.stop();
