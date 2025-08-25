@@ -1,3 +1,4 @@
+import 'module-alias/register';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
@@ -16,5 +17,5 @@ setupSocket(io, simulationEngine);
 
 const PORT = process.env.PORT || 7000;
 server.listen(PORT, () => {
-  logger.info(`Server listening on http://localhost:${PORT}`);
+  logger.info(`Server listening on ${PORT}`);
 });

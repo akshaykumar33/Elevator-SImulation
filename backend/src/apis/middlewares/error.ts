@@ -7,6 +7,6 @@ export const errorMiddleware = (
   res: Response,
   _next: NextFunction
 ) => {
-  logger.error(err.stack);
+  logger.error(`Error Track:${err.stack}`);
   res.status(500).json({ error: 'Internal server error' });
 };
