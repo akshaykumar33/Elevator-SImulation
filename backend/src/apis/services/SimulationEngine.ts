@@ -123,19 +123,25 @@ export default class SimulationEngine extends EventEmitter {
             this.scheduler.optimizeElevatorPositions();
         }
     }
-    updateFloorPanel(floor: number, direction: Direction, active: boolean) {
-        this.emit('simulation:floorPanelUpdate', { floor, direction, active });
+     updateFloorPanel(floor: number, direction: Direction, active: boolean) {
+       
+        this.emit("floorPanelUpdate", { floor, direction, active });
+         logger.info("updateFloorPanel called", floor, direction, active);
     }
+
     updateFloorWaitingArea(floor: number) {
-        this.emit('simulation:floorWaitingAreaUpdate', { floor, waitingPeople: this.requestHandler.getWaitingPeopleAtFloor(floor) });
+        const waitingPeople = this.requestHandler.getWaitingPeopleAtFloor(floor);
+        this.emit('simulation:floorWaitingAreaUpdate', { floor, waitingPeople });
+        logger.info("updateFloorWaitingArea",floor,waitingPeople)
     }
+
     updateElevatorDisplay(elevatorId: number) {
-        const elevator = this.elevators.find(e => e.id === elevatorId);
-        if (elevator) {
-            this.emit('simulation:elevatorDisplayUpdate', { elevatorId });
-        }
+        this.emit('simulation:elevatorDisplayUpdate', { elevatorId });
+        logger.info("updateElevatorDisplay",elevatorId)
     }
+
     handleFloorRequest(floor: number, direction: Direction) {
+       logger.info("handleFloorRequest", floor, direction)
         const maxFloor = this.config.numFloors;
         let destinationFloor: number | undefined;
 
@@ -156,7 +162,7 @@ export default class SimulationEngine extends EventEmitter {
         if (destinationFloor !== undefined) {
             const request = new Request(floor, destinationFloor);
             this.requestHandler?.addRequest(request);
-            logger.info(`Manual request: Floor ${floor} → ${destinationFloor} (${direction})`);
+            console.log(`Manual request: Floor ${floor} → ${destinationFloor} (${direction})`);
         }
         this.emit('simulation:floorRequest', { floor, destinationFloor, direction });
     }

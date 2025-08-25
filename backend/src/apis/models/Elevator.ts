@@ -179,7 +179,7 @@ export default class Elevator {
       targetFloor: this.targetFloor,
       direction: this.direction,
       doorState: this.doorState,
-      peopleCount: this.people.length,
+      people: this.people,
       capacity: this.capacity,
     };
   }

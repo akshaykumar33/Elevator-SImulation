@@ -1,12 +1,12 @@
 import { Server, Socket } from 'socket.io';
 import type SimulationEngine from '@/apis/services/SimulationEngine';
-import type { SimulationSnapshot } from '@/types/types';
+import type { SimulationSnapshot,Direction } from '@/types/types';
 import { logger } from '@/apis/middlewares/logger';
 
 
 export default function setupSocket(io: Server, simulationEngine: SimulationEngine) {
     io.on('connection', (socket: Socket) => {
-        logger.info(`Client connected: ${socket.id}`);
+        console.log(`Client connected: ${socket.id}`);
 
         // Send initial snapshot on connection
         socket.emit('simulation:update', simulationEngine.getSnapshot());
@@ -17,6 +17,23 @@ export default function setupSocket(io: Server, simulationEngine: SimulationEngi
         };
         simulationEngine.on('update', onUpdate);
 
+        const onFloorPanelUpdate = (data:{floor:number,direction:Direction,active:boolean}) => {
+            socket.emit("simulation:floorPanelUpdate", data);
+        };
+
+        simulationEngine.on("floorPanelUpdate", onFloorPanelUpdate);
+
+        const onFloorWaitingAreaUpdate = (data: { floor: number; waitingPeople: any[] }) => {
+            socket.emit('simulation:floorWaitingAreaUpdate', data);
+        };
+
+        const onElevatorDisplayUpdate = (data: { elevatorId: number }) => {
+            socket.emit('simulation:elevatorDisplayUpdate', data);
+        };
+
+        simulationEngine.on('simulation:floorWaitingAreaUpdate', onFloorWaitingAreaUpdate);
+        simulationEngine.on('simulation:elevatorDisplayUpdate', onElevatorDisplayUpdate);
+
         // Listen for control commands
         socket.on('simulation:start', () => simulationEngine.start());
         socket.on('simulation:stop', () => simulationEngine.stop());
@@ -26,9 +43,7 @@ export default function setupSocket(io: Server, simulationEngine: SimulationEngi
         });
 
         socket.on('simulation:floorRequest', ({ floor, direction }) => simulationEngine.handleFloorRequest(floor, direction));
-        socket.on('simulation:elevatorDisplayUpdate', ({ elevatorId }) => simulationEngine.updateElevatorDisplay(elevatorId));
-        socket.on('simulation:floorWaitingAreaUpdate', ({ floor }) => simulationEngine.updateFloorWaitingArea(floor));
-        socket.on('simulation:floorPanelUpdate', ({ floor, direction, active }) => simulationEngine.updateFloorPanel(floor, direction, active));
+   
 
         socket.on('disconnect', () => {
             logger.info(`Client disconnected: ${socket.id}`);

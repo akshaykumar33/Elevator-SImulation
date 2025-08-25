@@ -1,4 +1,4 @@
-import type { PersonState, PersonSnapshot } from "@/types/types";
+import { PersonState, PersonSnapshot } from "@/types/types";
 
 
 export default class Person {

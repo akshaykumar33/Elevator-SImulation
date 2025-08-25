@@ -58,7 +58,7 @@ describe('RequestHandler Integration Tests', () => {
     elevator.doorState = 'open';
 
     // Override Math.random to ensure passenger exits
-    jest.spyOn(global.Math, 'random').mockReturnValue(0.5);
+    jest.spyOn(globalThis.Math, 'random').mockReturnValue(0.5);
 
     requestHandler['checkCompletedRequests']();
 
@@ -66,7 +66,7 @@ describe('RequestHandler Integration Tests', () => {
     expect(requestHandler.pendingRequests).not.toContain(request);
 
     // Restore Math.random
-    jest.spyOn(global.Math, 'random').mockRestore();
+    jest.spyOn(globalThis.Math, 'random').mockRestore();
 
     simulationEngine.stop();
   });

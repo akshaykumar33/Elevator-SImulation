@@ -1,74 +1,121 @@
-import SimulationEngine from '../../src/apis/services/SimulationEngine';
-import { describe,beforeEach,test,expect } from '@jest/globals';
+import type SimulationEngine from '../../src/apis/services/SimulationEngine';
+import type ElevatorScheduler from '../../src/apis/services/ElevatorScheduler';
+import Request from '../../src/apis/models/Request';
+import type Elevator from '../../src/apis/models/Elevator';
+import { createSimulation ,createElevatorScheduler  } from '../fixtures/elevatorFixtures'
+import { describe, beforeEach, test, expect } from '@jest/globals';
 
 describe('ElevatorScheduler Integration Tests', () => {
   let simulationEngine: SimulationEngine;
+  let scheduler: ElevatorScheduler;
+  let elevators: Elevator[];
 
   beforeEach(() => {
-    simulationEngine = SimulationEngine.getInstance();
+    simulationEngine = createSimulation();
     simulationEngine.reset();
+    elevators = simulationEngine.elevators;
+    scheduler = createElevatorScheduler(simulationEngine);
   });
 
-  test('assignRequest assigns an unassigned request to an elevator', () => {
-    const request = {
-      originFloor: 1,
-      destinationFloor: 5,
-      direction: 'up',
-      priority: 1,
-      assigned: false,
-      elevatorId: null,
-    };
-    const assignedElevator = simulationEngine.scheduler.assignRequest(request);
+  test('assignRequest assigns using hybrid heuristic when elevator available', () => {
+    const req = new Request(1, 5);
+    const assignedElevator = scheduler.assignRequest(req);
+
     expect(assignedElevator).not.toBeNull();
-    expect(request.assigned).toBe(true);
-    expect(request.elevatorId).toBeDefined();
+    expect(req.assigned).toBe(true);
+    expect(req.elevatorId).toBe(assignedElevator?.id);
+    expect(assignedElevator?.queue).toContain(req.destinationFloor);
   });
 
-  test('findBestElevator returns elevator with best score', () => {
-    const request = {
-      originFloor: 1,
-      destinationFloor: 8,
-      direction: 'up',
-      priority: 1,
-      assigned: false,
-      elevatorId: null,
-    };
+  test('assignByLoadBalancing assigns to least utilized elevator', () => {
+    const req = new Request(2, 6);
 
-    const bestElevator = simulationEngine.scheduler['findBestElevator'](request);
-    expect(bestElevator).toBeDefined();
-    expect(simulationEngine.elevators).toContain(bestElevator!);
+    // artificially load first elevator
+    elevators[0].queue.push(1, 2, 3);
+
+    const assignedElevator = scheduler.assignByLoadBalancing(req);
+
+    expect(assignedElevator).not.toBeNull();
+    expect(req.assigned).toBe(true);
+    expect(req.elevatorId).toBe(assignedElevator?.id);
+    expect(assignedElevator?.queue).toContain(req.originFloor);
+    expect(assignedElevator?.queue).toContain(req.destinationFloor);
+    expect(assignedElevator?.id).not.toBe(elevators[0].id); // should avoid heavily loaded
   });
 
-  test('calculateElevatorScore calculates score based on distance and direction', () => {
-    const elevator = simulationEngine.elevators[0];
-    const request = {
-      originFloor: elevator.currentFloor,
-      destinationFloor: elevator.currentFloor + 3,
-      direction: 'up',
-      priority: 2,
-    };
+  test('assignByLOOK assigns elevator moving toward request', () => {
+    const req = new Request(3, 7);
+    req.direction = 'up';
 
-    // Access private method via casting to any to test internal logic
-    const score = (simulationEngine.scheduler as any).calculateElevatorScore(elevator, request);
-    expect(typeof score).toBe('number');
+    elevators[0].currentFloor = 2;
+    elevators[0].direction = 'up';
+    elevators[1].currentFloor = 8;
+    elevators[1].direction = 'down';
+
+    const assignedElevator = scheduler.assignByLOOK(req);
+
+    expect(assignedElevator).toBe(elevators[0]);
+    expect(req.assigned).toBe(true);
+    expect(req.elevatorId).toBe(elevators[0].id);
   });
 
-  test('optimizeElevatorPositions assigns idle elevators to optimal floors', () => {
-    // Set all elevators to idle with empty queues
-    simulationEngine.elevators.forEach(elevator => {
-      elevator.queue = [];
-      elevator.direction = 'idle';
-      elevator.currentFloor = 1;
+  test('assignByFCFS falls back to shortest queue', () => {
+    const req = new Request(4, 1);
+
+    // Load elevator[0] heavily, keep elevator[1] empty
+    elevators[0].queue.push(1, 2, 3, 4);
+
+    const assignedElevator = scheduler.assignByFCFS(req);
+
+    expect(assignedElevator).toBe(elevators[1]);
+    expect(req.assigned).toBe(true);
+  });
+
+  test('assignByRoundRobin cycles across elevators', () => {
+    const req1 = new Request(1, 2);
+    const req2 = new Request(2, 3);
+
+    const e1 = scheduler.assignByRoundRobin(req1);
+    const e2 = scheduler.assignByRoundRobin(req2);
+
+    expect(e1).not.toBeNull();
+    expect(e2).not.toBeNull();
+    expect(e1?.id).not.toBe(e2?.id); // must cycle
+  });
+
+  test('calculateHeuristicScore returns lower score for closer, idle, low-utilization elevator', () => {
+    const req = new Request(1, 10);
+
+    elevators[0].currentFloor = 1;
+    elevators[0].direction = 'idle';
+    elevators[0].queue = [];
+
+    elevators[1].currentFloor = 8;
+    elevators[1].direction = 'up';
+    elevators[1].queue = [5, 6];
+
+    const score0 = scheduler.calculateHeuristicScore(elevators[0], req);
+    const score1 = scheduler.calculateHeuristicScore(elevators[1], req);
+
+    expect(score0).toBeLessThan(score1);
+  });
+
+  test('optimizeElevatorPositions repositions idle elevators evenly across floors', () => {
+    // Set all elevators idle and empty
+    elevators.forEach(e => {
+      e.direction = 'idle';
+      e.queue = [];
+      e.currentFloor = 1;
     });
 
-    simulationEngine.scheduler.optimizeElevatorPositions();
+    scheduler.optimizeElevatorPositions();
 
-    const targetFloors = simulationEngine.scheduler['calculateOptimalPositions'](simulationEngine.elevators.length);
-
-    simulationEngine.elevators.forEach((elevator, idx) => {
-      // Elevator should have at least 1 queued floor per optimization
-      expect(elevator.queue.length).toBeGreaterThan(0);
-      expect(targetFloors).toContain(elevator.queue[0]);
+    elevators.forEach(e => {
+      expect(e.queue.length).toBe(1); // got reposition target
+      expect(e.queue[0]).toBeGreaterThanOrEqual(1);
+      expect(e.queue[0]).toBeLessThanOrEqual(simulationEngine.config.numFloors);
     });
   });
 });
+
+

@@ -1,3 +1,4 @@
+import type Person from "@/apis/models/Person";
 
 export type Direction = 'up' | 'down' | 'idle'
 export type DoorState = 'closed' | 'opening' | 'open' | 'closing'
@@ -17,7 +18,7 @@ export interface ElevatorSnapshot {
   targetFloor: number;
   direction: string;
   doorState: string;
-  peopleCount: number;
+  people: Person[];
   capacity: number;
 }
 
@@ -52,7 +53,7 @@ export interface PersonSnapshot {
   id: string;
   currentFloor: number;
   destinationFloor: number;
-  direction: 'up' | 'down';
+  direction: Direction;
   state: PersonState;
   elevatorId: number | null;
 }

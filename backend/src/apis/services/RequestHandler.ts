@@ -1,7 +1,7 @@
 import { CONFIG } from '@/utils/config';
 import Request from '@/apis/models/Request';
 import type SimulationEngine from "@/apis/services/SimulationEngine";
-import type { MetricsSnapshot } from '@/types/types';
+import  { MetricsSnapshot } from '@/types/types';
 import { logger } from '@/apis/middlewares/logger';
 
 export default class RequestHandler {
