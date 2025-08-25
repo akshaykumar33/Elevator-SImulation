@@ -15,7 +15,7 @@ const io = new SocketIOServer(server, { cors: { origin: '*' } });
 const simulationEngine = SimulationEngine.getInstance();
 setupSocket(io, simulationEngine);
 
-const PORT = process.env.PORT || 7000;
+const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   logger.info(`Server listening on ${PORT}`);
 });

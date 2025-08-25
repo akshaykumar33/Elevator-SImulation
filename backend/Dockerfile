@@ -16,7 +16,10 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
-# Expose port
+# Set default environment variables
+ENV PORT=8000
+
+# Document the port (for reference)
 EXPOSE 8000
 
 # Start the app
