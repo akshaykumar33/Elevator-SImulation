@@ -26,11 +26,11 @@ For setup, installation, and usage details, please refer to the main [README.md]
 - ✅ **Deployment**  
   The project is deployed live and accessible at the following link:  
   **[Project Frontend Deployment URL](https://elevator-s-imulation.vercel.app/)** 
-  **[Project Backend Deployment URL](https://elevator-simulation-cdho.onrender.com)** 
+  **[Project Backend Deployment URL](https://elevator-simulation-agxn.onrender.com)** 
 
 - ✅ **Demo Video**  
   Walkthrough and demo video available at:  
-  **[Project Video](https://drive.google.com/drive/folders/16oONnCgIVkDBoCuLLO2wGzfDkjhAMEQs?usp=sharing)**  
+  **[Project Video](https://www.loom.com/share/31a4649745e94728852453f547fed7f1?sid=09007fdf-7059-48fb-88a4-915c11bb00f7)**  
 
 - ✅ **Assessment Compliance**  
   Implemented exactly as required in the assessment PDF with proper structure, coding guidelines, and best practices.
