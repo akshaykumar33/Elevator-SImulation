@@ -16,8 +16,11 @@ COPY . .
 # Build Next.js app
 RUN npm run build
 
+# Set default port
+ENV PORT=7000
+
 # Expose frontend port
 EXPOSE 7000
 
-# Start the frontend app
-CMD ["npm", "start"]
+# Start Next.js on the right port
+CMD ["npm", "run", "start", "--", "-p", "7000"]
