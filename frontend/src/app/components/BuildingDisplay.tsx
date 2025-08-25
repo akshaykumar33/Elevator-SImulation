@@ -1,3 +1,4 @@
+'use client'
 import FloorPanels from '@/app/components/FloorPanels'
 import ElevatorBank from '@/app/components/ElevatorBank'
 

@@ -13,7 +13,7 @@ function MetricsPanel() {
 
   const utilizationRate =
     elevators.length > 0
-      ? (elevators.reduce((sum, e) => sum + (e.peopleCount/e.capacity), 0) /
+      ? (elevators.reduce((sum, e) => sum + (e.people.length/e.capacity), 0) /
           elevators.length) *
         100
       : 0;

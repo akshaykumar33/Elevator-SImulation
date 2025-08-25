@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-"use client"
+'use client'
 import {
   createContext,
   useContext,
@@ -9,26 +8,30 @@ import {
   ReactNode,
 } from "react";
 import { io, Socket } from "socket.io-client";
+
 import { Direction } from "@/app/types/types";
 import { useSimulationStore } from "@/app/stores/useSimulationStore";
-
 
 // Define the API for your actions
 type SimulationSocketContextType = {
   start: () => void;
   stop: () => void;
   reset: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateConfig: (key: string, value: any) => void;
   handleFloorRequest: (floor: number, direction: Direction) => void;
-
 };
 
-const SimulationSocketContext = createContext<SimulationSocketContextType | undefined>(undefined);
+const SimulationSocketContext = createContext<
+  SimulationSocketContextType | undefined
+>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-console.log("API",API_URL)
 // Provider
-export function SimulationSocketProvider({ children }: { children: ReactNode }) {
+export function SimulationSocketProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const setIsRunning = useSimulationStore((state) => state.setIsRunning);
   const setSpeed = useSimulationStore((state) => state.setSpeed);
   const setConfig = useSimulationStore((state) => state.setConfig);
@@ -39,9 +42,10 @@ export function SimulationSocketProvider({ children }: { children: ReactNode }) 
 
   // Use a ref to avoid recreating the socket on every render
   const socketRef = useRef<Socket | null>(null);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    const socket = io(API_URL); // Adjust URL as needed
+    const socket = io(API_URL);
     socketRef.current = socket;
 
     // Listen for updates from the server
@@ -50,48 +54,53 @@ export function SimulationSocketProvider({ children }: { children: ReactNode }) 
       if (data.requestsQueue) setRequests(data.requestsQueue);
       if (data.metrics) setMetrics(data.metrics);
       if (data.config) setConfig(data.config);
-      if (typeof data.timer ==="number") setTimer(data.timer);
+      if (typeof data.timer === "number") setTimer(data.timer);
       if (typeof data.isRunning === "boolean") setIsRunning(data.isRunning);
       if (typeof data.speed === "number") setSpeed(data.speed);
     });
-    
+
     socket.on("simulation:floorPanelUpdate", ({ floor, direction, active }) => {
-    // You can update Zustand state here, or trigger a callback, etc.
-    // Example: store setFloorPanelActive(floor, direction, active)
-    // Or: store.setFloorPanels({ floor, direction, active })
-    useSimulationStore().setFloorPanels({ floor, direction, active })
-  });
+      
+      useSimulationStore
+        .getState()
+        .setFloorPanels({ floor, direction, active });
+    });
 
-  // --> Listen for "simulation:floorWaitingAreaUpdate"
-  socket.on("simulation:floorWaitingAreaUpdate", ({ floor, waitingPeople }) => {
-    // You can update Zustand: store.setWaitingArea({ floor, waitingPeople })
-    useSimulationStore().setWaitingArea({ floor, waitingPeople })
-  });
+    socket.on(
+      "simulation:floorWaitingAreaUpdate",
+      ({ floor, waitingPeople }) => {
+        
+        useSimulationStore.getState().setWaitingArea({ floor, waitingPeople });
+      }
+    );
 
-  // --> Listen for "simulation:elevatorDisplayUpdate"
-  socket.on("simulation:elevatorDisplayUpdate", ({ elevatorId }) => {
-    // Optionally fetch elevator data, or update the UI in any way needed
-    // Example: store.setElevatorDisplay(elevatorId)
-    useSimulationStore().setElevatorId(elevatorId)
-  });
+    socket.on("simulation:elevatorDisplayUpdate", ({ elevatorId }) => {
+      useSimulationStore.getState().setElevatorId(elevatorId);
+    });
     // Cleanup when unmounting
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [setConfig, setElevators, setIsRunning, setMetrics, setRequests, setSpeed, setTimer]);
+  }, [API_URL, setConfig, setElevators, setIsRunning, setMetrics, setRequests, setSpeed, setTimer]);
 
   // Memoize actions so identity is stable
-  const actions = useMemo<SimulationSocketContextType>(() => ({
-    start: () => socketRef.current?.emit("simulation:start"),
-    stop: () => socketRef.current?.emit("simulation:stop"),
-    reset: () => socketRef.current?.emit("simulation:reset"),
-    updateConfig: (key: string, value: any) =>
-      socketRef.current?.emit("simulation:updateConfig", { key, value }),
-    handleFloorRequest: (floor: number, direction: Direction) =>
-      socketRef.current?.emit("simulation:floorRequest", { floor, direction }),
-
-  }), []);
+  const actions = useMemo<SimulationSocketContextType>(
+    () => ({
+      start: () => socketRef.current?.emit("simulation:start"),
+      stop: () => socketRef.current?.emit("simulation:stop"),
+      reset: () => socketRef.current?.emit("simulation:reset"),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      updateConfig: (key: string, value: any) =>
+        socketRef.current?.emit("simulation:updateConfig", { key, value }),
+      handleFloorRequest: (floor: number, direction: Direction) =>
+        socketRef.current?.emit("simulation:floorRequest", {
+          floor,
+          direction,
+        }),
+    }),
+    []
+  );
 
   return (
     <SimulationSocketContext.Provider value={actions}>
@@ -104,7 +113,9 @@ export function SimulationSocketProvider({ children }: { children: ReactNode }) 
 export function useSimulationSocket() {
   const context = useContext(SimulationSocketContext);
   if (!context) {
-    throw new Error("useSimulationSocket must be used within a SimulationSocketProvider");
+    throw new Error(
+      "useSimulationSocket must be used within a SimulationSocketProvider"
+    );
   }
   return context;
 }

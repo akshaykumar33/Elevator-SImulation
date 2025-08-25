@@ -6,13 +6,14 @@ import { useSimulationSocket } from "@/app/contexts/SimulationSocketContext";
 import { SimulationConfig } from "@/app/stores/useSimulationStore";
 
 function TestSenarios() {
-  const {  setConfig } = useSimulationStore();
+  const { setConfig } = useSimulationStore();
   const {updateConfig} = useSimulationSocket();
 
   const senarios = CONFIG.scenario;
   type ScenarioKey = keyof typeof senarios;
 
   const onChange = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (field: keyof SimulationConfig, value: any) => {
       setConfig({ [field]: value });
       updateConfig(field, value )

@@ -1,8 +1,7 @@
-"use client"
-
+'use client'
 import { useCallback } from "react";
-import { useSimulationStore } from "@/app/stores/useSimulationStore";
 import { useSimulationSocket } from "@/app/contexts/SimulationSocketContext";
+import { useSimulationStore } from "@/app/stores/useSimulationStore";
 
 
 export default function ControlPanel() {
@@ -11,13 +10,14 @@ const {start,stop,reset,updateConfig} =useSimulationSocket();
 
 
   const onChange = useCallback(
-    (field: keyof typeof config, value: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (field: keyof typeof config, value:any ) => {
       setConfig({ [field]: value });
       updateConfig(field, value )
     },
-    [setConfig,updateConfig]
+    [setConfig, updateConfig]
   );
-// console.log("ControlPanel config,isRunning:", config,isRunning);
+// //console.log("ControlPanel config,isRunning:", config,isRunning);
   return (
     <div className="control-panel card">
       <div className="card__header">

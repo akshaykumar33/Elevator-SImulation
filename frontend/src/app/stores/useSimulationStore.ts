@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-"use client"
+'use client'
 
 import { create } from "zustand";
-import { Direction, DoorState } from "@/app/types/types";
-import type Request from '@/app/components/Engine/Request'
-import type Person from "@/app/components/Engine/Person";
+import { Request,Person,Direction, DoorState } from "../types/types";
 
 export interface ElevatorSnapshot {
   id: number;
@@ -12,7 +9,7 @@ export interface ElevatorSnapshot {
   targetFloor: number;
   direction: Direction;
   doorState: DoorState;
-  peopleCount: number;
+  people: Person[];
   capacity: number;
 }
 
@@ -40,11 +37,11 @@ export interface SimulationStore {
   elevators: ElevatorSnapshot[];
   requests: Request[];
   metrics: SimulationMetrics;
-  timer : number;
+  timer: number;
   // // NEW UI states
-  floorPanels:{}; 
-  waitingAreas: {};
-  elevatorId: {};
+  floorPanels: { floor: number, direction: Direction, active: boolean };
+  waitingAreas: { floor: number, waitingPeople: Person[] };
+  elevatorId: number;
   // existing setters
   setIsRunning: (running: boolean) => void;
   setSpeed: (speed: number) => void;
@@ -57,7 +54,7 @@ export interface SimulationStore {
   setFloorPanels: (updates: { floor: number; direction: Direction; active: boolean }) => void;
   setWaitingArea: (updates: { floor: number; waitingPeople: Person[] }) => void;
   setElevatorId: (elevatorId: number) => void;
-  setTimer:(timer: number) => void;
+  setTimer: (timer: number) => void;
 }
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({
@@ -79,10 +76,10 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
     totalRequests: 0,
     completedRequests: 0,
   },
-   timer:0,
-  floorPanels: {},
-  waitingAreas: {},
-  elevatorId: {},
+  timer: 0,
+  floorPanels: { floor: 1, direction: 'up', active: false },
+  waitingAreas: { floor: 1, waitingPeople: [] },
+  elevatorId: 1,
 
   setIsRunning: (running) => set({ isRunning: running }),
   setSpeed: (speed) => set({ speed }),
@@ -94,14 +91,12 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
   setRequests: (requests) => set({ requests }),
   setMetrics: (metrics) => set({ metrics }),
 
-  setFloorPanels: ({ floor, direction, active }) =>
-    set({floorPanels:{floor, direction, active}}),
+  setFloorPanels: (floorPanels) =>
+    set({ floorPanels }),
 
-  setWaitingArea: ({ floor, waitingPeople }) =>
-    set({waitingAreas:{ floor, waitingPeople }}),
+  setWaitingArea: (waitingAreas) => set({ waitingAreas }),
 
-  setElevatorId: (elevatorId) =>
-    set({ elevatorId }),
+  setElevatorId: (elevatorId) => set({ elevatorId }),
 
-  setTimer:(timer)=>set({timer})
+  setTimer: (timer) => set({ timer })
 }));

@@ -1,60 +1,91 @@
-"use client"
+"use client";
 
-import { Direction } from '@/app/types/types';
+import { Direction } from "@/app/types/types";
+import React, { useCallback } from "react";
 
-interface FloorPanelProps {
-  numFloors: number;
-  onFloorRequest: (floor: number, direction: Direction) => void;
-  activeFloorPanels: { [key: string]: boolean }; // For button active state if needed
-  waitingPeopleCount: { [floor: number]: number }; // Optional: to display waiting people count
-}
+import { Person } from "@/app/types/types";
 
- const FloorPanels: React.FC<FloorPanelProps> = ({
-  numFloors,
-  onFloorRequest,
-  activeFloorPanels = {},
-  waitingPeopleCount = {},
-}) => {
+import { useSimulationSocket } from "@/app/contexts/SimulationSocketContext";
+import { useSimulationStore } from "@/app/stores/useSimulationStore";
+
+const FloorPanels: React.FC = () => {
+  const { config, floorPanels, waitingAreas } = useSimulationStore();
+  const { handleFloorRequest } = useSimulationSocket();
+
+  const { numFloors } = config;
+
+  // console.log("waitingAreas",waitingAreas)
+  // floorPanels state structure is { floor, direction, active }
+  // waitingAreas state structure is { floor, waitingPeople }
+
+  // This helper checks if a floor button is active
+  const isButtonActive = useCallback(
+    (floor: number, direction: Direction) => {
+      if (!floorPanels) return false;
+      return (
+        floorPanels.floor === floor &&
+        floorPanels.direction === direction &&
+        floorPanels.active
+      );
+    },
+    [floorPanels]
+  );
+
+  // Gets the waiting people array for a floor
+  const getWaitingPeople = useCallback(
+    (floor: number) => {
+      return waitingAreas?.floor === floor ? waitingAreas.waitingPeople : [];
+    },
+    [waitingAreas]
+  );
+
   return (
-    <div id="floor-panels">
-      {[...Array(numFloors).keys()]
-        .map(i => numFloors - i) // Floors descending from numFloors to 1
-        .map(floor => (
-          <div key={floor} className="floor-panel">
-            <div className="floor-number">{floor}</div>
+    <div id="floor-panels" className="floor-panels">
+      {/* Render floors from top to bottom */}
+      {[...Array(numFloors)].map((_, i) => {
+        const floorNum = numFloors - i; // descending order
+
+        const upActive = isButtonActive(floorNum, "up");
+        const downActive = isButtonActive(floorNum, "down");
+        const waitingPeople = getWaitingPeople(floorNum) || [];
+
+        return (
+          <div className="floor-panel" key={floorNum}>
+            <div className="floor-number">{floorNum}</div>
             <div className="floor-buttons">
               <button
-                className="floor-btn"
-                title={`Call elevator up from floor ${floor}`}
-                disabled={floor >= numFloors}
-                style={{ opacity: floor >= numFloors ? 0.3 : 1 }}
-                onClick={() => onFloorRequest(floor, 'up')}
-                aria-pressed={activeFloorPanels[`${floor}-up`] ?? false}
+                className={`floor-btn ${upActive ? "active" : ""}`}
+                disabled={floorNum >= numFloors}
+                title={`Call elevator up from floor ${floorNum}`}
+                onClick={() => handleFloorRequest(floorNum, "up")}
               >
                 ↑
               </button>
               <button
-                className="floor-btn"
-                title={`Call elevator down from floor ${floor}`}
-                disabled={floor <= 1}
-                style={{ opacity: floor <= 1 ? 0.3 : 1 }}
-                onClick={() => onFloorRequest(floor, 'down')}
-                aria-pressed={activeFloorPanels[`${floor}-down`] ?? false}
+                className={`floor-btn ${downActive ? "active" : ""}`}
+                disabled={floorNum <= 1}
+                title={`Call elevator down from floor ${floorNum}`}
+                onClick={() => handleFloorRequest(floorNum, "down")}
               >
                 ↓
               </button>
             </div>
             <div className="floor-waiting-area">
-              <div className="waiting-people" aria-label={`Waiting people count on floor ${floor}`}>
-                {waitingPeopleCount[floor] ? (
-                  <span>{waitingPeopleCount[floor]} waiting</span>
-                ) : (
-                  <span>No one waiting</span>
-                )}
+              <div className="waiting-people">
+                {waitingPeople.map((person: Person) => (
+                  <span
+                    key={person.id}
+                    className="person waiting"
+                    data-direction={person.direction}
+                  >
+                    👤
+                  </span>
+                ))}
               </div>
             </div>
           </div>
-        ))}
+        );
+      })}
     </div>
   );
 };
